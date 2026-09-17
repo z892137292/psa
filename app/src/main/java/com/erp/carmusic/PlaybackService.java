@@ -71,7 +71,6 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                         .setMediaMetadata(new MediaMetadata.Builder()
                                 .setTitle(title == null ? "未知歌曲" : title)
                                 .setArtist(artist == null ? "未知歌手" : artist)
-                                .setDurationMs(duration)
                                 .setIsPlayable(true)
                                 .build())
                         .build();
