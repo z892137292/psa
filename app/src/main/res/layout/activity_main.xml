@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#101010">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ERP车机音乐"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:gravity="center"/>
+
+    <TextView
+        android:id="@+id/song"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="扫描本地音乐中…"
+        android:textColor="#FFFFFF"
+        android:textSize="23sp"
+        android:gravity="center"/>
+
+    <TextView
+        android:id="@+id/artist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="—"
+        android:textColor="#AAAAAA"
+        android:textSize="17sp"
+        android:gravity="center"/>
+
+    <SeekBar
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"/>
+
+    <TextView
+        android:id="@+id/lyric"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="歌词区域"
+        android:textColor="#FFFFFF"
+        android:textSize="26sp"
+        android:padding="20dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/prev"
+            android:layout_width="120dp"
+            android:layout_height="match_parent"
+            android:text="上一首"/>
+
+        <Button
+            android:id="@+id/play"
+            android:layout_width="140dp"
+            android:layout_height="match_parent"
+            android:text="播放"/>
+
+        <Button
+            android:id="@+id/next"
+            android:layout_width="120dp"
+            android:layout_height="match_parent"
+            android:text="下一首"/>
+    </LinearLayout>
+</LinearLayout>
