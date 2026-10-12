@@ -20,7 +20,7 @@
 
 ## 媒体诊断 v0.2.0（独立开发分支，未实车验收）
 
-保持 ERP Music 播放器核心不变，新增首页「媒体诊断」入口。
+保持 ERP Music 播放器核心不变，新增首页「媒体诊断」入口。调试版 APK 使用独立的 `com.erp.carmusic.diag` 包名，与旧 ERP Music 并存，不覆盖原安装。
 
 - 「开始后台记录」启动前台服务及常驻通知，后台记录 Android 可见的 AudioPlaybackConfiguration 状态和 MediaSession 包名/播放状态变化。
 - 「媒体会话权限」打开系统通知访问设置；手动授权 ERP车机音乐后才能查询其他应用的 MediaSession。通知服务不读取通知文本。
