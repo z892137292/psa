@@ -4,6 +4,7 @@ import android.app.*;
 import android.content.*;
 import android.database.Cursor;
 import android.media.AudioAttributes;
+import android.view.KeyEvent;
 import android.net.Uri;
 import android.os.*;
 import android.provider.MediaStore;
@@ -33,11 +34,20 @@ public class PlaybackService extends MediaBrowserServiceCompat {
 
         session = new MediaSessionCompat(this, "ERP_CarMusic");
         session.setCallback(new MediaSessionCompat.Callback() {
-            @Override public void onPlay() { player.play(); updateState(); }
-            @Override public void onPause() { player.pause(); updateState(); }
-            @Override public void onSkipToNext() { player.seekToNext(); updateState(); }
-            @Override public void onSkipToPrevious() { player.seekToPrevious(); updateState(); }
-            @Override public void onSeekTo(long pos) { player.seekTo(pos); updateState(); }
+            @Override public void onPlay() { MediaDiagnosticLog.record(PlaybackService.this, "ERP_SESSION", "onPlay"); player.play(); updateState(); }
+            @Override public void onPause() { MediaDiagnosticLog.record(PlaybackService.this, "ERP_SESSION", "onPause"); player.pause(); updateState(); }
+            @Override public void onSkipToNext() { MediaDiagnosticLog.record(PlaybackService.this, "ERP_SESSION", "onSkipToNext"); player.seekToNext(); updateState(); }
+            @Override public void onSkipToPrevious() { MediaDiagnosticLog.record(PlaybackService.this, "ERP_SESSION", "onSkipToPrevious"); player.seekToPrevious(); updateState(); }
+            @Override public void onSeekTo(long pos) { MediaDiagnosticLog.record(PlaybackService.this, "ERP_SESSION", "onSeekTo"); player.seekTo(pos); updateState(); }
+            @Override public boolean onMediaButtonEvent(Intent intent) {
+                KeyEvent key = intent == null ? null : intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                if (key != null) {
+                    MediaDiagnosticLog.record(PlaybackService.this, "ERP_SESSION_KEY",
+                            KeyEvent.keyCodeToString(key.getKeyCode()) + " action=" + key.getAction()
+                            + " (仅指向ERP Music会话的按键)");
+                }
+                return super.onMediaButtonEvent(intent);
+            }
         });
         session.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
