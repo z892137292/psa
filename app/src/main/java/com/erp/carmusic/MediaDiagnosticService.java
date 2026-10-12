@@ -48,7 +48,7 @@ public class MediaDiagnosticService extends Service {
                     for (AudioPlaybackConfiguration c : configs) {
                         try {
                             // Android may anonymize other applications' playback configurations.
-                            visible.add("state=" + c.getPlayerState()
+                            visible.add("active=" + c.isActive()
                                     + " usage=" + c.getAudioAttributes().getUsage());
                         } catch (Exception ignored) {
                             visible.add("unavailable");
