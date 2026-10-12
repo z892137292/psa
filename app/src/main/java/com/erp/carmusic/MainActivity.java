@@ -28,6 +28,9 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQ);
         }
 
+        findViewById(R.id.media_diagnostic).setOnClickListener(v ->
+                startActivity(new Intent(this, MediaDiagnosticActivity.class)));
+
         song.setText("ERP车机音乐");
         artist.setText("本地音乐播放器");
         lyric.setText("第一版\n等待选择歌曲");
