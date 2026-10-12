@@ -2,6 +2,7 @@ package com.erp.carmusic;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ClipData;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -91,6 +92,8 @@ public class MediaDiagnosticActivity extends Activity {
     private void action(String action) {
         Intent intent = new Intent(this, MediaDiagnosticService.class).setAction(action);
         if (MediaDiagnosticService.STOP.equals(action)) {
+            stopService(intent);
+        } else if (MediaDiagnosticService.RELEASE_FOCUS.equals(action)) {
             startService(intent);
         } else {
             startForegroundService(intent);
@@ -107,6 +110,7 @@ public class MediaDiagnosticActivity extends Activity {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
             send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.setClipData(ClipData.newRawUri("ERP media diagnostic log", uri));
             send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(send, "导出 ERP 媒体诊断日志"));
         } catch (Exception e) {

@@ -5,9 +5,14 @@ on:
   push:
     branches: [ "main", "master", "feature/erp-music-media-diagnostics" ]
 
+concurrency:
+  group: erp-media-quality-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -29,16 +34,19 @@ jobs:
       - name: Install Android SDK packages
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install             "platform-tools"             "platforms;android-34"             "build-tools;34.0.0"
+          sdkmanager --install "platform-tools" "platforms;android-28" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.5"
 
-      - name: Build debug APK
+      - name: Static diagnostic safety gate
+        run: python3 tools/check_diagnostics.py
+
+      - name: Compile, API28 compatibility and unit tests
         run: |
-          gradle --no-daemon --stacktrace assembleDebug
+          gradle --no-daemon --stacktrace assembleDebug :app:verifyDiagnosticApi28 :app:testDebugUnitTest
 
       - name: Android lint
         run: |
@@ -46,11 +54,28 @@ jobs:
 
       - name: APK SHA-256
         run: |
-          sha256sum app/build/outputs/apk/debug/app-debug.apk
+          apkanalyzer manifest print app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/manifest.xml
+          python3 tools/verify_apk.py app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/manifest.xml
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/signature.txt
+          sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ERP-CarMusic-v0.2.0-media-diagnostic-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: ERP-Media-Diagnostic-v0.2.1-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/SHA256SUMS
+            app/build/outputs/apk/debug/manifest.xml
+            app/build/outputs/apk/debug/signature.txt
           if-no-files-found: error
+
+      - name: Upload quality evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ERP-Diagnostic-quality-${{ github.sha }}
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: warn

@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove"/>
+    <application>
+        <activity android:name=".MainActivity" tools:node="remove"/>
+        <activity android:name=".MediaDiagnosticActivity" android:exported="true" tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- No player session, MediaBrowser or media-button consumer in the diagnostic APK. -->
+        <service android:name=".PlaybackService" android:enabled="false" android:exported="false" tools:replace="android:exported"/>
+    </application>
+</manifest>

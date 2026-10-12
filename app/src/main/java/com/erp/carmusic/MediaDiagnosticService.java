@@ -48,8 +48,10 @@ public class MediaDiagnosticService extends Service {
                     for (AudioPlaybackConfiguration c : configs) {
                         try {
                             // Android may anonymize other applications' playback configurations.
-                            visible.add("active=" + c.isActive()
-                                    + " usage=" + c.getAudioAttributes().getUsage());
+                            AudioAttributes attributes = c.getAudioAttributes();
+                            visible.add(attributes == null ? "attributes=unavailable"
+                                    : "usage=" + attributes.getUsage()
+                                    + " content=" + attributes.getContentType());
                         } catch (Exception ignored) {
                             visible.add("unavailable");
                         }
@@ -59,7 +61,7 @@ public class MediaDiagnosticService extends Service {
                     if (!snapshot.equals(lastAudio)) {
                         lastAudio = snapshot;
                         MediaDiagnosticLog.record(MediaDiagnosticService.this, "PLAYBACK", snapshot
-                                + " (不是原车音源归属证明)");
+                                + " (播放器身份/逐播放器状态/厂家音源：权限或接口不可见；不是原车音源归属证明)");
                     }
                 }
             };
@@ -77,14 +79,24 @@ public class MediaDiagnosticService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
+        if (RELEASE_FOCUS.equals(action)) {
+            releaseFocus();
+            if (!recording) stopSelf();
+            return START_NOT_STICKY;
+        }
         if (!recording) startObserving();
+        if (!recording) return START_NOT_STICKY;
         if (FOCUS.equals(action)) testFocus();
-        if (RELEASE_FOCUS.equals(action)) releaseFocus();
         return START_STICKY;
     }
 
     private void startObserving() {
         NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm == null) {
+            MediaDiagnosticLog.record(this, "ERROR", "前台通知权限或接口不可见，未启动记录或焦点测试");
+            stopSelf();
+            return;
+        }
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ERP媒体诊断", NotificationManager.IMPORTANCE_LOW));
         Intent open = new Intent(this, MediaDiagnosticActivity.class);
         PendingIntent click = PendingIntent.getActivity(this, 1, open,
@@ -113,6 +125,7 @@ public class MediaDiagnosticService extends Service {
             try {
                 ComponentName listener = new ComponentName(MediaDiagnosticService.this, MediaAccessListener.class);
                 List<MediaController> controllers = sessions.getActiveSessions(listener);
+                permissionWarningSent = false;
                 ArrayList<String> states = new ArrayList<>();
                 for (MediaController controller : controllers) {
                     PlaybackState playback = controller.getPlaybackState();
@@ -130,7 +143,7 @@ public class MediaDiagnosticService extends Service {
                 if (!permissionWarningSent) {
                     permissionWarningSent = true;
                     MediaDiagnosticLog.record(MediaDiagnosticService.this, "ACCESS",
-                            "无法读取其他媒体会话：请在系统「通知使用权」授权 ERP车机音乐；未授权不影响播放活动监听");
+                            "媒体会话权限或接口不可见：请在系统「通知使用权」授权本诊断应用；未授权不影响播放活动监听");
                 }
             } catch (Exception error) {
                 if (!permissionWarningSent) {
@@ -145,24 +158,44 @@ public class MediaDiagnosticService extends Service {
 
     private void testFocus() {
         if (focusRequest != null) releaseFocus();
+        if (audio == null) {
+            MediaDiagnosticLog.record(this, "FOCUS_PROBE", "音频服务不可用，未请求焦点");
+            return;
+        }
         focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
                 .setAudioAttributes(new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
                 .setOnAudioFocusChangeListener(focusListener, handler).build();
-        int result = audio.requestAudioFocus(focusRequest);
+        int result;
+        try {
+            result = audio.requestAudioFocus(focusRequest);
+        } catch (RuntimeException unavailable) {
+            MediaDiagnosticLog.record(this, "FOCUS_PROBE", "焦点请求不可用：" + unavailable.getClass().getSimpleName());
+            releaseFocus();
+            return;
+        }
         MediaDiagnosticLog.record(this, "FOCUS_PROBE", "用户主动请求短暂MAY_DUCK焦点 result=" + result
                 + "；可能降低其他音乐音量；10秒自动释放");
         handler.removeCallbacks(releaseLater);
-        handler.postDelayed(releaseLater, 10000);
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            handler.postDelayed(releaseLater, 10000);
+        } else {
+            releaseFocus();
+        }
     }
 
     private void releaseFocus() {
         handler.removeCallbacks(releaseLater);
         if (focusRequest != null) {
-            int result = audio.abandonAudioFocusRequest(focusRequest);
+            AudioFocusRequest request = focusRequest;
             focusRequest = null;
-            MediaDiagnosticLog.record(this, "FOCUS_PROBE", "释放本应用音频焦点 result=" + result);
+            try {
+                int result = audio.abandonAudioFocusRequest(request);
+                MediaDiagnosticLog.record(this, "FOCUS_PROBE", "释放本应用音频焦点 result=" + result);
+            } catch (RuntimeException unavailable) {
+                MediaDiagnosticLog.record(this, "FOCUS_PROBE", "平台释放焦点接口异常：" + unavailable.getClass().getSimpleName());
+            }
         }
     }
 
