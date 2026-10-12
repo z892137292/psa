@@ -15,6 +15,12 @@
         android:textSize="28sp"
         android:gravity="center"/>
 
+    <Button
+        android:id="@+id/media_diagnostic"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="媒体诊断（焦点 / MediaSession / 按键 / 日志）"/>
+
     <TextView
         android:id="@+id/song"
         android:layout_width="match_parent"
