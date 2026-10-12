@@ -6,6 +6,17 @@ android {
     namespace 'com.erp.carmusic'
     compileSdk 34
 
+    buildTypes {
+        debug {
+            // Diagnostic APK can coexist with the installed ERP Music app.
+            applicationIdSuffix '.diag'
+            manifestPlaceholders = [appLabel: 'ERP媒体诊断（测试）']
+        }
+        release {
+            manifestPlaceholders = [appLabel: 'ERP车机音乐']
+        }
+    }
+
     defaultConfig {
         applicationId 'com.erp.carmusic'
         minSdk 28
