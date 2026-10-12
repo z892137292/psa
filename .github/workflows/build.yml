@@ -3,7 +3,7 @@ name: Build ERP CarMusic
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "feature/erp-music-media-diagnostics" ]
 
 jobs:
   build:
@@ -40,9 +40,17 @@ jobs:
         run: |
           gradle --no-daemon --stacktrace assembleDebug
 
+      - name: Android lint
+        run: |
+          gradle --no-daemon :app:lintDebug
+
+      - name: APK SHA-256
+        run: |
+          sha256sum app/build/outputs/apk/debug/app-debug.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ERP-CarMusic-v0.1.0-debug
+          name: ERP-CarMusic-v0.2.0-media-diagnostic-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
